@@ -1,0 +1,17 @@
+services:
+  nginx:
+    image: my-custom-nginx
+    container_name: my-custom-nginx
+    networks:
+      - traefik-proxy_default
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.my-nginx.rule=Host(`nginx.local`)"
+      - "traefik.http.routers.my-nginx.entrypoints=websecure"
+      - "traefik.http.routers.my-nginx.tls=true"
+      - "traefik.http.services.my-nginx.loadbalancer.server.port=80"
+      - "traefik.docker.network=traefik-proxy_default"
+
+networks:
+  traefik-proxy_default:
+    external: true

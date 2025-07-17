@@ -1,30 +1,31 @@
 pipeline {
-    agent any
-
+    // Run this pipeline inside a container that has the Docker CLI
+    agent {
+        docker {
+            image 'docker:latest'
+            args '-v /var/run/docker.sock:/var/run/docker.sock'
+        }
+    }
     stages {
-        stage('Build') {
+        stage('Build Image') {
             steps {
-                echo 'Building the Docker image...'
+                echo 'Building the custom nginx image...'
+                // Build the image using the local Dockerfile
                 sh 'docker build -t my-custom-nginx .'
             }
         }
-        stage('Test') {
+        stage('Deploy with Compose') {
             steps {
-                echo 'Running the container for a quick test...'
-                sh 'docker run --name my-test-server -d -p 8080:80 my-custom-nginx'
-                // Wait a few seconds for the server to start
-                sh 'sleep 5'
-                // Use curl to check if the server is responding
-                sh 'curl http://localhost:8080'
+                echo 'Deploying nginx container via Docker Compose...'
+                // Use Docker Compose to run the container with all the Traefik labels
+                sh 'docker compose up -d'
             }
         }
     }
     post {
         always {
-            echo 'Stopping and removing the test container...'
-            // Use || true to prevent the build from failing if the container doesn't exist
-            sh 'docker stop my-test-server || true'
-            sh 'docker rm my-test-server || true'
+            echo 'Deployment complete. Container is managed by Docker Compose.'
+            // No cleanup needed here, as we want the container to keep running.
         }
     }
 }
